@@ -31,7 +31,7 @@ localization propagation=Cost231PropagationLossModel time=5 grid=1000X1000 n(UE)
 ```
 
 ## GitHubMathematicaHP.txt 
-This file ontains Mathematica code for computing half-plane scores. It has been created in Mathematica version 12.
+This file contains Mathematica code for computing half-plane scores, trilaterating UE locations and postprocessing the FBS to directional antenna. When running this file, desired directional angle for the BS should be chosen. It has been created in Mathematica version 12. 
 
 ## ScoringEfficient.ipynb 
 This file contains python code for computing the convex hull scores. 
