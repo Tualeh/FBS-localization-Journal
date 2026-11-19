@@ -1,0 +1,751 @@
+Clear
+
+Needs["Combinatorica`"]
+
+SetDirectory[NotebookDirectory[]]
+
+data = Import[
+   "localization propagation=ThreeGppUMaPropagationLossModel time=50 \
+grid=1000X1000 n(UE)=300 n(gNB+FBS)=8 lbs=48 fbs=50 seed=5 run=1.txt",
+    "Table"];
+Export["data.csv", data, "CSV"];
+TableAll = Import["data.csv", "Dataset", "HeaderLines" -> 1];
+TableAllNoDup = DeleteDuplicates[TableAll]
+
+dataloc = 
+  Import["localization propagation=ThreeGppUMaPropagationLossModel \
+time=5 grid=1000X1000 n(UE)=300 n(gNB+FBS)=8 lbs=48 fbs=50 seed=55 \
+run=1.txt", "Table"];
+Export["dataloc.csv", dataloc, "CSV"];
+TableDist = Import["dataloc.csv", "Dataset", "HeaderLines" -> 1];
+TableDist = DeleteDuplicates[TableDist];
+
+
+TableRSRPDist = 
+  TableDist[
+    Select[#RSRP1 != 0 && #RSRP2 != 0 && #RSRP3 != 0 && #RSRP4 != 
+        0 && #RSRP4 != 0 && #RSRP5 != 0 && #RSRP6 != 0 && #RSRP7 != 
+        0 &]][All, {"RSRP1", "UE-gNB1-Distance", "RSRP2", 
+    "UE-gNB2-Distance", "RSRP3", "UE-gNB3-Distance", "RSRP4", 
+    "UE-gNB4-Distance", "RSRP5", "UE-gNB5-Distance", "RSRP6", 
+    "UE-gNB6-Distance", "RSRP7", "UE-gNB7-Distance"}];
+RSRPDIST = {};
+(*Saves distance x with RSRP y on cell y*)
+For[i = 1, i < 150,
+  AppendTo[RSRPDIST, {}];
+  i++;
+  ];
+For[i = 1, i < Length[TableRSRPDist] + 1,
+  AppendTo[RSRPDIST[[TableRSRPDist[[i]][[1]]]], 
+   TableRSRPDist[[i]][[2]]];
+  i++;
+  ];
+For[i = 1, i < Length[TableRSRPDist] + 1,
+  AppendTo[RSRPDIST[[TableRSRPDist[[i]][[3]]]], 
+   TableRSRPDist[[i]][[4]]];
+  i++;
+  ];
+For[i = 1, i < Length[TableRSRPDist] + 1,
+  AppendTo[RSRPDIST[[TableRSRPDist[[i]][[5]]]], 
+   TableRSRPDist[[i]][[6]]];
+  i++;
+  ];
+For[i = 1, i < Length[TableRSRPDist] + 1,
+  AppendTo[RSRPDIST[[TableRSRPDist[[i]][[7]]]], 
+   TableRSRPDist[[i]][[8]]];
+  i++;
+  ];
+For[i = 1, i < Length[TableRSRPDist] + 1,
+  AppendTo[RSRPDIST[[TableRSRPDist[[i]][[9]]]], 
+   TableRSRPDist[[i]][[10]]];
+  i++;
+  ];
+For[i = 1, i < Length[TableRSRPDist] + 1,
+  AppendTo[RSRPDIST[[TableRSRPDist[[i]][[11]]]], 
+   TableRSRPDist[[i]][[12]]];
+  i++;
+  ];
+For[i = 1, i < Length[TableRSRPDist] + 1,
+  AppendTo[RSRPDIST[[TableRSRPDist[[i]][[13]]]], 
+   TableRSRPDist[[i]][[14]]];
+  i++;
+  ];
+
+RSRPAV = {};
+RSRPSTDDEV = {};
+RSRPNUM = {};
+For[i = 1, i < 150,
+  AppendTo[RSRPAV, Mean[RSRPDIST[[i]]]];
+  If[Length[RSRPDIST[[i]]] > 10,
+   AppendTo[RSRPSTDDEV, StandardDeviation[RSRPDIST[[i]]]];
+   ,
+   AppendTo[RSRPSTDDEV, 0];
+   ];
+  AppendTo[RSRPNUM, Length[RSRPDIST[[i]]]];
+  i++;
+  ];
+
+
+
+
+
+
+
+
+
+
+
+
+
+BLSectorAnchorFix = RandomReal[{-Pi, -Pi/2}];
+For[Angle90 = 0, Angle90 < 4,
+  BLSectorAnchor = BLSectorAnchorFix + Angle90*Pi/2;
+  For[timer = 0, timer < 9,
+   
+   FBSTable = 
+    Transpose[
+     TableAllNoDup[
+       Select[5*timer < #Time && #Time < 5*timer + 0.5 &]][
+      All, {"X8", "Y8", "Z8"}]];
+   FBS = {FBSTable[[1]][[1]], FBSTable[[2]][[1]], FBSTable[[3]][[1]]};
+   FBS = {FBS[[1]], FBS[[2]]};
+   Loc = {};
+   Locs = {};
+   Loc1 = {};
+   Locs1 = {};
+   APROXDist = {};
+   TableFilAv = 
+    TableAllNoDup[
+      Select[5*timer < #Time && #Time < 5*timer + 0.5 && #RSRP1 > 
+          8 && #RSRP2 > 8 && #RSRP3 > 8 && #RSRP4 > 8 && #RSRP5 > 
+          8 && #RSRP6 > 8 && #RSRP7 > 8 && #RSRP8 > 0 && #RSRP1 < 
+          105 && #RSRP2 < 105 && #RSRP3 < 105 && #RSRP4 < 
+          105 && #RSRP5 < 105 && #RSRP6 < 105 && #RSRP7 < 
+          105 && #RSRP8 < 200 &]][
+     All, {"Time", "IMSI", "UE-X", "UE-Y", "UE-Z", "RSRP8", "RSRP1", 
+      "UE-gNB1-Distance", "RSRP2", "UE-gNB2-Distance", "RSRP3", 
+      "UE-gNB3-Distance", "RSRP4", "UE-gNB4-Distance", "RSRP5", 
+      "UE-gNB5-Distance", "RSRP6", "UE-gNB6-Distance", "RSRP7", 
+      "UE-gNB7-Distance"}];
+   For[i = 1, i < Length[TableFilAv] + 1,
+    AppendTo[
+     APROXDist, {RSRPAV[[TableFilAv[[i]][[7]]]], 
+      RSRPAV[[TableFilAv[[i]][[9]]]], RSRPAV[[TableFilAv[[i]][[11]]]],
+       RSRPAV[[TableFilAv[[i]][[13]]]], 
+      RSRPAV[[TableFilAv[[i]][[15]]]], 
+      RSRPAV[[TableFilAv[[i]][[17]]]], 
+      RSRPAV[[TableFilAv[[i]][[19]]]]}];
+    i++;
+    ];
+   TableFil = 
+    TableAllNoDup[
+      Select[5*timer < #Time && #Time < 5*timer + 0.5 && #RSRP1 > 
+          8 && #RSRP2 > 8 && #RSRP3 > 8 && #RSRP4 > 8 && #RSRP5 > 
+          8 && #RSRP6 > 8 && #RSRP7 > 8 && #RSRP8 > 0 && #RSRP1 < 
+          105 && #RSRP2 < 105 && #RSRP3 < 105 && #RSRP4 < 
+          105 && #RSRP5 < 105 && #RSRP6 < 105 && #RSRP7 < 
+          105 && #RSRP8 < 200 &]][
+     All, {"Time", "IMSI", "UE-X", "UE-Y", "UE-Z", "RSRP8", "RSRP1", 
+      "UE-gNB1-Distance", "RSRP2", "UE-gNB2-Distance", "RSRP3", 
+      "UE-gNB3-Distance", "RSRP4", "UE-gNB4-Distance", "RSRP5", 
+      "UE-gNB5-Distance", "RSRP6", "UE-gNB6-Distance", "RSRP7", 
+      "UE-gNB7-Distance"}];
+   eNBLoc = 
+    Transpose[
+     DeleteDuplicates[
+      TableAllNoDup[Select[#Time > 0.3 &]][
+       All, {"X1", "Y1", "Z1", "X2", "Y2", "Z2", "X3", "Y3", "Z3", 
+        "X4", "Y4", "Z4", "X5", "Y5", "Z5", "X6", "Y6", "Z6", "X7", 
+        "Y7", "Z7"}]]];
+   TableFilT = Transpose[TableFil];
+   
+   For[i = 1, i < Length[TableFilT[[1]]] + 1,
+    AppendTo[Loc1, {}];
+    AppendTo[Locs1, {}];
+    AppendTo[Loc, {}];
+    AppendTo[Locs, {}];
+    Locs1[[i]] = 
+     FindArgMin[
+      Sum[(Sqrt[(x - eNBLoc[[3 k - 2]][[1]])^2 + (y - 
+               eNBLoc[[3 k - 1]][[1]])^2 + (1.8 - 
+               eNBLoc[[3 k]][[1]])^2] - APROXDist[[i]][[k]])^2, {k, 1,
+         7}], {{x, 500}, {y, 500}}];
+    Loc1[[i]] = 
+     FindArgMin[
+      Sum[(Sqrt[(x - eNBLoc[[3 k - 2]][[1]])^2 + (y - 
+               eNBLoc[[3 k - 1]][[1]])^2 + (1.8 - 
+               eNBLoc[[3 k]][[1]])^2] - APROXDist[[i]][[k]])^2, {k, 1,
+         7}], {{x, Locs1[[i]][[1]] + 10}, {y, Locs1[[i]][[1]] - 10}}];
+    Locs[[i]] = {Locs1[[i]][[1]], Locs1[[i]][[2]], 
+      Sum[(Sqrt[(Locs1[[i]][[1]] - 
+               eNBLoc[[3 k - 2]][[1]])^2 + (Locs1[[i]][[2]] - 
+               eNBLoc[[3 k - 1]][[1]])^2 + (1.8 - 
+               eNBLoc[[3 k]][[1]])^2] - APROXDist[[i]][[k]])^2, {k, 1,
+         7}], TableFilT[[3]][[i]], TableFilT[[4]][[i]]};
+    Loc[[i]] = {Loc1[[i]][[1]], Loc1[[i]][[2]], 
+      Sum[((Sqrt[(Loc1[[i]][[1]] - 
+                 eNBLoc[[3 k - 2]][[1]])^2 + (Loc1[[i]][[2]] - 
+                 eNBLoc[[3 k - 1]][[1]])^2 + (1.8 - 
+                 eNBLoc[[3 k]][[1]])^2] - APROXDist[[i]][[k]])^2)/
+        APROXDist[[i]][[k]], {k, 1, 7}], TableFilT[[3]][[i]], 
+      TableFilT[[4]][[i]], TableFilT[[6]][[i]]};
+    (** Sum(D_i(x,y) -d_i)^2      D_i comes (x,y), d_i fittedModel/
+    equasion **)
+    
+    (**Loc[[i]]={x,y}/.Last[FindMinimum[Sum[(Sqrt[(x-eNBLoc[[3k-2]][[
+    1]])^2+(y-eNBLoc[[3k-1]][[1]])^2+(2-eNBLoc[[3k]][[1]])^2]-
+    DistanceTable[[i]][[2k]])^2,{k,1,4}],{{x,250},{y,250}}]];**)
+    i++;
+    ];
+   Loc = SortBy[Loc, #[[3]] &];
+   Loc = Drop[Loc, -30];
+   Locs = SortBy[Locs, #[[3]] &];
+   Locs = Drop[Locs, -30];
+   
+   
+   
+   
+   
+   
+   
+   FBS = {FBSTable[[1]][[1]], FBSTable[[2]][[1]]};
+   
+   NumberUE = Length[Loc];
+   BLUEsignal = {};
+   BLNumberUE = Length[Loc];
+   BLUEall = {};
+   BLUEnoSig = {};
+   BLUEsignal2 = {};
+   BLUEnoSig2 = {};
+   BLUEall2 = {};
+   BLPolarLoc = {};
+   For[j = 1, j < BLNumberUE + 1,
+    AppendTo[BLPolarLoc, 
+     ToPolarCoordinates[{Loc[[j]][[4]] - FBS[[1]], 
+       Loc[[j]][[5]] - FBS[[2]]}]];
+    
+    j++;
+    ];
+   
+   
+   
+   (**Bot left 90Deg**)
+   
+   If[Angle90 < 3,
+    For[j = 1, j < NumberUE + 1,
+      
+      
+      If[(BLPolarLoc[[j]][[2]] > BLSectorAnchor && 
+         BLPolarLoc[[j]][[2]] < BLSectorAnchor + Pi/2),
+       AppendTo[
+        BLUEsignal, {Loc[[j]][[1]], Loc[[j]][[2]], Loc[[j]][[6]]}];
+       AppendTo[BLUEsignal2, {Loc[[j]][[1]], Loc[[j]][[2]]}];
+       ,
+       AppendTo[BLUEnoSig, {Loc[[j]][[1]], Loc[[j]][[2]], 0}];
+       AppendTo[BLUEnoSig2, {Loc[[j]][[1]], Loc[[j]][[2]]}];
+       ];
+      j++;
+      ];
+    ];
+   
+   If[Angle90 == 3,
+    For[j = 1, j < NumberUE + 1,
+      
+      
+      If[(BLPolarLoc[[j]][[2]] > BLSectorAnchor && 
+          BLPolarLoc[[j]][[2]] < 
+           BLSectorAnchor + Pi/2) || (BLPolarLoc[[j]][[2]] < 
+          BLSectorAnchor - 3 Pi/2),
+       AppendTo[
+        BLUEsignal, {Loc[[j]][[1]], Loc[[j]][[2]], Loc[[j]][[6]]}];
+       AppendTo[BLUEsignal2, {Loc[[j]][[1]], Loc[[j]][[2]]}];
+       ,
+       AppendTo[BLUEnoSig, {Loc[[j]][[1]], Loc[[j]][[2]], 0}];
+       AppendTo[BLUEnoSig2, {Loc[[j]][[1]], Loc[[j]][[2]]}];
+       ];
+      j++;
+      ];
+    ];
+   
+   
+   For[j = 1, j < Length[BLUEnoSig[[]]] + 1,
+    AppendTo[
+     BLUEall, {BLUEnoSig[[j]][[1]], BLUEnoSig[[j]][[2]], 
+      BLUEnoSig[[j]][[3]]}];
+    AppendTo[BLUEall2, {BLUEnoSig2[[j]][[1]], BLUEnoSig2[[j]][[2]]}];
+    j++;
+    ];
+   For[j = 1, j < Length[BLUEsignal] + 1,
+    AppendTo[
+     BLUEall, {BLUEsignal[[j]][[1]], BLUEsignal[[j]][[2]], 
+      BLUEsignal[[j]][[3]]}];
+    AppendTo[BLUEall2, {BLUEsignal2[[j]][[1]], BLUEsignal2[[j]][[2]]}];
+    j++;
+    ];
+   
+   
+   grids[min_, max_] := 
+    Table[If[EvenQ[i], {i, Blue}, {i, Blue}], {i, 0, 1000, 50}];
+   Show[
+    (**ListDensityPlot[HeatMap,PlotLegends\[Rule]Automatic],**)
+    ListPlot[BLUEnoSig2, GridLines -> grids, ImageSize -> Large, 
+     AspectRatio -> 1],
+    ListPlot[BLUEsignal2, PlotStyle -> Green],
+    ListPlot[{{FBS[[1]], FBS[[2]]}}, PlotStyle -> Red],
+    ListPlot[{{Mean[BLUEsignal][[1]], Mean[BLUEsignal][[2]]}}, 
+     PlotStyle -> Black]
+    (**,
+    ListPlot[{{Gridsize*(M1-1),Gridsize*(M2-1)}},
+    PlotStyle\[Rule]Black]**)
+    (**ListPlot[{Gridsize*({Position[ROI,Max[ROI]][[All,1]]}-1)},
+    PlotStyle\[Rule]Black]**)
+    ];
+   
+   Centroid = {Mean[BLUEsignal][[1]], Mean[BLUEsignal][[2]]};
+   Dist2Cent = {};
+   For[i = 1, i < Length[BLUEsignal] + 1,
+    AppendTo[Dist2Cent, 
+     EuclideanDistance[
+      Centroid, {BLUEsignal[[i]][[1]], BLUEsignal[[i]][[2]]}]];
+    AppendTo[BLUEsignal[[i]], 
+     EuclideanDistance[
+      Centroid, {BLUEsignal[[i]][[1]], BLUEsignal[[i]][[2]]}]];
+    i++;
+    ];
+   BLUEsignal = SortBy[BLUEsignal, #[[4]] &];
+   BLUEsignal = Drop[BLUEsignal, -Ceiling[Length[BLUEsignal]/10]];
+   
+   BLUEsignal2 = {};
+   For[i = 1, i < Length[BLUEsignal] + 1,
+    AppendTo[
+     BLUEsignal2, {BLUEsignal[[i]][[1]], BLUEsignal[[i]][[2]]}];
+    i++;
+    ];
+   
+   BackUpSig = BLUEsignal;
+   BLUEsignal = BLUEsignal2;
+   
+   For[i = 1, i < Length[BLUEsignal] + 1,
+    AppendTo[BLUEsignal[[i]], BackUpSig[[i]][[3]]];
+    i++;
+    ];
+   
+   grids[min_, max_] := 
+    Table[If[EvenQ[i], {i, Blue}, {i, Blue}], {i, 0, 1000, 50}];
+   Show[
+    (**ListDensityPlot[HeatMap,PlotLegends\[Rule]Automatic],**)
+    ListPlot[BLUEnoSig2, GridLines -> grids, ImageSize -> Large, 
+     AspectRatio -> 1],
+    ListPlot[BLUEsignal2, PlotStyle -> Green],
+    ListPlot[{{FBS[[1]], FBS[[2]]}}, PlotStyle -> Red],
+    ListPlot[{{Mean[BLUEsignal][[1]], Mean[BLUEsignal][[2]]}}, 
+     PlotStyle -> Black]
+    (**,
+    ListPlot[{{Gridsize*(M1-1),Gridsize*(M2-1)}},
+    PlotStyle\[Rule]Black]**)
+    (**ListPlot[{Gridsize*({Position[ROI,Max[ROI]][[All,1]]}-1)},
+    PlotStyle\[Rule]Black]**)
+    ];
+   
+   ROIang = {};
+   (**ang=Pi/3;
+   Half=HalfPlane[{FBS,{FBS[[1]]+Cos[3Pi/2-ang],FBS[[2]]-Sin[Pi/2-
+   ang]}},{0,-1}];
+   LeftP=HalfPlane[{FBS,{FBS[[1]],FBS[[2]]-1}},{-1,0}];**)
+   ScaleP = 50;
+   Score = 0;
+   Size = 1000;
+   Gridsize = Size/ScaleP;
+   HeatMapang = {};
+   
+   For[j = 1, j < ScaleP + 1,
+    AppendTo[ROIang, {}];
+    j++;
+    ];
+   For[j = 1, j < ScaleP + 1,
+    For[i = 1, i < ScaleP + 1,
+     AppendTo[ROIang[[j]], Score];
+     AppendTo[HeatMapang, {(j - 1)*Gridsize, (i - 1)*Gridsize, Score}];
+     i++;
+     ];
+    j++;
+    ];
+   For[j = 1, j < Length[BLUEsignal],
+    For[i = j + 1, i < Length[BLUEsignal] + 1,
+     a = BLUEsignal[[j]][[3]];
+     b = BLUEsignal[[i]][[3]];
+     If[a != b,
+      For[k = 1, k < ScaleP + 1,
+        For[h = 1, h < ScaleP + 1,
+         x = (k - 1)*Gridsize;
+         y = (h - 1)*Gridsize;
+         D1 = 
+          EuclideanDistance[{x, y}, {BLUEsignal[[j]][[1]], 
+            BLUEsignal[[j]][[2]]}];
+         D2 = 
+          EuclideanDistance[{x, y}, {BLUEsignal[[i]][[1]], 
+            BLUEsignal[[i]][[2]]}];
+         If[a > b && D1 > D2,
+          ROIang[[k]][[h]] = ROIang[[k]][[h]] + 1;
+          ];
+         If[a < b && D1 < D2,
+          ROIang[[k]][[h]] = ROIang[[k]][[h]] + 1;
+          ];
+         h++;
+         ];
+        k++;
+        ];
+      ];
+     i++;
+     ];
+    j++;
+    ];
+   For[j = 1, j < ScaleP + 1,
+    For[i = 1, i < ScaleP + 1,
+     HeatMapang[[i + ScaleP (j - 1)]][[3]] = ROIang[[j]][[i]];
+     i++;
+     ];
+    j++;
+    ];
+   M1s = Position[ROIang, Min[ROIang]][[1]][[1]];
+   M2s = Position[ROIang, Min[ROIang]][[1]][[2]];
+   
+   
+   ang = 3 Pi/4;
+   LeftP = 
+    HalfPlane[{FBS, {FBS[[1]] + Cos[BLSectorAnchor - ang], 
+       FBS[[2]] + Sin[BLSectorAnchor - ang]}}, {Cos[
+       BLSectorAnchor - ang/2], Sin[BLSectorAnchor - ang/2]}];
+   Half = 
+    HalfPlane[{FBS, {FBS[[1]] + Cos[BLSectorAnchor], 
+       FBS[[2]] + Sin[BLSectorAnchor]}}, {Cos[BLSectorAnchor + ang/2],
+       Sin[BLSectorAnchor + ang/2]}];
+   grids[min_, max_] := 
+    Table[If[EvenQ[i], {i, Blue}, {i, Blue}], {i, 0, 1000, 50}];
+   Show[
+    ListDensityPlot[HeatMapang, PlotLegends -> Automatic],
+    ListPlot[BLUEsignal2, GridLines -> grids, ImageSize -> Large, 
+     AspectRatio -> 1],
+    ListPlot[BLUEnoSig2, PlotStyle -> Green],
+    ListPlot[{FBS}, PlotStyle -> Red],
+    ListPlot[{Gridsize*(Position[ROIang, Min[ROIang]] - 1)}, 
+     PlotStyle -> Black],
+    RegionPlot[RegionIntersection[Half, LeftP], 
+     PlotRange -> {{0, 1000}, {0, 1000}}, 
+     PlotStyle -> {Blue, Opacity[0.2]}]
+    ];
+   
+   If[timer == 0 && Angle90 == 0,
+    Export["Score90GGPMove0R5A0", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove0R5A0", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove0R5A0", BLUEnoSig, "CSV"];
+    Export["FBSMove0R5A0", FBS, "CSV"];
+    Export["Angle90", BLSectorAnchor, "CSV"];
+    ];
+   
+   If[timer == 1 && Angle90 == 0,
+    Export["Score90GGPMove1R5A0", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove1R5A0", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove1R5A0", BLUEnoSig, "CSV"];
+    Export["FBSMove1R5A0", FBS, "CSV"];
+    ];
+   
+   If[timer == 2 && Angle90 == 0,
+    Export["Score90GGPMove2R5A0", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove2R5A0", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove2R5A0", BLUEnoSig, "CSV"];
+    Export["FBSMove2R5A0", FBS, "CSV"];
+    ];
+   
+   If[timer == 3 && Angle90 == 0,
+    Export["Score90GGPMove3R5A0", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove3R5A0", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove3R5A0", BLUEnoSig, "CSV"];
+    Export["FBSMove3R5A0", FBS, "CSV"];
+    ];
+   
+   If[timer == 4 && Angle90 == 0,
+    Export["Score90GGPMove4R5A0", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove4R5A0", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove4R5A0", BLUEnoSig, "CSV"];
+    Export["FBSMove4R5A0", FBS, "CSV"];
+    ];
+   
+   If[timer == 5 && Angle90 == 0,
+    Export["Score90GGPMove5R5A0", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove5R5A0", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove5R5A0", BLUEnoSig, "CSV"];
+    Export["FBSMove5R5A0", FBS, "CSV"];
+    ];
+   
+   If[timer == 6 && Angle90 == 0,
+    Export["Score90GGPMove6R5A0", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove6R5A0", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove6R5A0", BLUEnoSig, "CSV"];
+    Export["FBSMove6R5A0", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 7 && Angle90 == 0,
+    Export["Score90GGPMove7R5A0", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove7R5A0", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove7R5A0", BLUEnoSig, "CSV"];
+    Export["FBSMove7R5A0", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 8 && Angle90 == 0,
+    Export["Score90GGPMove8R5A0", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove8R5A0", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove8R5A0", BLUEnoSig, "CSV"];
+    Export["FBSMove8R5A0", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 9 && Angle90 == 0,
+    Export["Score90GGPMove9R5A0", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove9R5A0", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove9R5A0", BLUEnoSig, "CSV"];
+    Export["FBSMove9R5A0", FBS, "CSV"];
+    ];
+   
+   
+   
+   
+   
+   If[timer == 0 && Angle90 == 1,
+    Export["Score90GGPMove0R5A1", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove0R5A1", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove0R5A1", BLUEnoSig, "CSV"];
+    Export["FBSMove0R5A1", FBS, "CSV"];
+    Export["Angle90", BLSectorAnchor, "CSV"];
+    ];
+   
+   If[timer == 1 && Angle90 == 1,
+    Export["Score90GGPMove1R5A1", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove1R5A1", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove1R5A1", BLUEnoSig, "CSV"];
+    Export["FBSMove1R5A1", FBS, "CSV"];
+    ];
+   
+   If[timer == 2 && Angle90 == 1,
+    Export["Score90GGPMove2R5A1", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove2R5A1", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove2R5A1", BLUEnoSig, "CSV"];
+    Export["FBSMove2R5A1", FBS, "CSV"];
+    ];
+   
+   If[timer == 3 && Angle90 == 1,
+    Export["Score90GGPMove3R5A1", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove3R5A1", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove3R5A1", BLUEnoSig, "CSV"];
+    Export["FBSMove3R5A1", FBS, "CSV"];
+    ];
+   
+   If[timer == 4 && Angle90 == 1,
+    Export["Score90GGPMove4R5A1", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove4R5A1", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove4R5A1", BLUEnoSig, "CSV"];
+    Export["FBSMove4R5A1", FBS, "CSV"];
+    ];
+   
+   If[timer == 5 && Angle90 == 1,
+    Export["Score90GGPMove5R5A1", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove5R5A1", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove5R5A1", BLUEnoSig, "CSV"];
+    Export["FBSMove5R5A1", FBS, "CSV"];
+    ];
+   
+   If[timer == 6 && Angle90 == 1,
+    Export["Score90GGPMove6R5A1", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove6R5A1", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove6R5A1", BLUEnoSig, "CSV"];
+    Export["FBSMove6R5A1", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 7 && Angle90 == 1,
+    Export["Score90GGPMove7R5A1", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove7R5A1", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove7R5A1", BLUEnoSig, "CSV"];
+    Export["FBSMove7R5A1", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 8 && Angle90 == 1,
+    Export["Score90GGPMove8R5A1", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove8R5A1", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove8R5A1", BLUEnoSig, "CSV"];
+    Export["FBSMove8R5A1", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 9 && Angle90 == 1,
+    Export["Score90GGPMove9R5A1", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove9R5A1", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove9R5A1", BLUEnoSig, "CSV"];
+    Export["FBSMove9R5A1", FBS, "CSV"];
+    ];
+   
+   
+   
+   
+   
+   
+   If[timer == 0 && Angle90 == 2,
+    Export["Score90GGPMove0R5A2", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove0R5A2", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove0R5A2", BLUEnoSig, "CSV"];
+    Export["FBSMove0R5A2", FBS, "CSV"];
+    Export["Angle90", BLSectorAnchor, "CSV"];
+    ];
+   
+   If[timer == 1 && Angle90 == 2,
+    Export["Score90GGPMove1R5A2", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove1R5A2", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove1R5A2", BLUEnoSig, "CSV"];
+    Export["FBSMove1R5A2", FBS, "CSV"];
+    ];
+   
+   If[timer == 2 && Angle90 == 2,
+    Export["Score90GGPMove2R5A2", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove2R5A2", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove2R5A2", BLUEnoSig, "CSV"];
+    Export["FBSMove2R5A2", FBS, "CSV"];
+    ];
+   
+   If[timer == 3 && Angle90 == 2,
+    Export["Score90GGPMove3R5A2", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove3R5A2", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove3R5A2", BLUEnoSig, "CSV"];
+    Export["FBSMove3R5A2", FBS, "CSV"];
+    ];
+   
+   If[timer == 4 && Angle90 == 2,
+    Export["Score90GGPMove4R5A2", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove4R5A2", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove4R5A2", BLUEnoSig, "CSV"];
+    Export["FBSMove4R5A2", FBS, "CSV"];
+    ];
+   
+   If[timer == 5 && Angle90 == 2,
+    Export["Score90GGPMove5R5A2", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove5R5A2", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove5R5A2", BLUEnoSig, "CSV"];
+    Export["FBSMove5R5A2", FBS, "CSV"];
+    ];
+   
+   If[timer == 6 && Angle90 == 2,
+    Export["Score90GGPMove6R5A2", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove6R5A2", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove6R5A2", BLUEnoSig, "CSV"];
+    Export["FBSMove6R5A2", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 7 && Angle90 == 2,
+    Export["Score90GGPMove7R5A2", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove7R5A2", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove7R5A2", BLUEnoSig, "CSV"];
+    Export["FBSMove7R5A2", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 8 && Angle90 == 2,
+    Export["Score90GGPMove8R5A2", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove8R5A2", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove8R5A2", BLUEnoSig, "CSV"];
+    Export["FBSMove8R5A2", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 9 && Angle90 == 2,
+    Export["Score90GGPMove9R5A2", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove9R5A2", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove9R5A2", BLUEnoSig, "CSV"];
+    Export["FBSMove9R5A2", FBS, "CSV"];
+    ];
+   
+   
+   
+   
+   
+   
+   If[timer == 0 && Angle90 == 3,
+    Export["Score90GGPMove0R5A3", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove0R5A3", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove0R5A3", BLUEnoSig, "CSV"];
+    Export["FBSMove0R5A3", FBS, "CSV"];
+    Export["Angle90", BLSectorAnchor, "CSV"];
+    ];
+   
+   If[timer == 1 && Angle90 == 3,
+    Export["Score90GGPMove1R5A3", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove1R5A3", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove1R5A3", BLUEnoSig, "CSV"];
+    Export["FBSMove1R5A3", FBS, "CSV"];
+    ];
+   
+   If[timer == 2 && Angle90 == 3,
+    Export["Score90GGPMove2R5A3", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove2R5A3", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove2R5A3", BLUEnoSig, "CSV"];
+    Export["FBSMove2R5A3", FBS, "CSV"];
+    ];
+   
+   If[timer == 3 && Angle90 == 3,
+    Export["Score90GGPMove3R5A3", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove3R5A3", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove3R5A3", BLUEnoSig, "CSV"];
+    Export["FBSMove3R5A3", FBS, "CSV"];
+    ];
+   
+   If[timer == 4 && Angle90 == 3,
+    Export["Score90GGPMove4R5A3", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove4R5A3", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove4R5A3", BLUEnoSig, "CSV"];
+    Export["FBSMove4R5A3", FBS, "CSV"];
+    ];
+   
+   If[timer == 5 && Angle90 == 3,
+    Export["Score90GGPMove5R5A3", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove5R5A3", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove5R5A3", BLUEnoSig, "CSV"];
+    Export["FBSMove5R5A3", FBS, "CSV"];
+    ];
+   
+   If[timer == 6 && Angle90 == 3,
+    Export["Score90GGPMove6R5A3", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove6R5A3", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove6R5A3", BLUEnoSig, "CSV"];
+    Export["FBSMove6R5A3", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 7 && Angle90 == 3,
+    Export["Score90GGPMove7R5A3", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove7R5A3", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove7R5A3", BLUEnoSig, "CSV"];
+    Export["FBSMove7R5A3", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 8 && Angle90 == 3,
+    Export["Score90GGPMove8R5A3", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove8R5A3", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove8R5A3", BLUEnoSig, "CSV"];
+    Export["FBSMove8R5A3", FBS, "CSV"];
+    ];
+   
+   
+   If[timer == 9 && Angle90 == 3,
+    Export["Score90GGPMove9R5A3", HeatMapang, "CSV"];
+    Export["SignalUE90GGPMove9R5A3", BLUEsignal, "CSV"];
+    Export["NoSignalUE90GGPMove9R5A3", BLUEnoSig, "CSV"];
+    Export["FBSMove9R5A3", FBS, "CSV"];
+    ];
+   
+   timer++;
+   ];
+  Angle90++;
+  ];
