@@ -1,0 +1,70 @@
+SetDirectory[NotebookDirectory[]]
+
+coord = Import["CHloc120MovAng01R5.txt", "CSV"]
+FBScoord = Import["FBS120MoveR5.txt", "CSV"]
+HPcoord = Import["HPlocMoveAng01R5.txt", "CSV"]
+
+HPcoordBackup = HPcoord;
+coordBackup = coord;
+FBScoordBackup = FBScoord;
+
+
+
+
+(*Use suitable choice in place of [[19;;27]]. Typically interval \
+should have 9 values and end in a value divisible by 9*)
+
+coord = coordBackup[[19 ;; 27]];
+FBScoord = FBScoordBackup[[19 ;; 27]];
+
+fit = LinearModelFit[coord, xx, xx];
+fitFBS = LinearModelFit[FBScoord, xx, xx];
+corners = {{0, 0}, {0, 1000}, {1000, 0}, {1000, 1000}};
+AvErrorCH = 
+  Sum[EuclideanDistance[coord[[i]], FBScoord[[i]]], {i, 1, 9}]/
+   Length[FBScoord];
+(*Lin mod. gives y=ax+b*)
+{CHb, CHa} = fit["BestFitParameters"];
+p = {};
+projCH = {};
+For[i = 1, i < Length[coord] + 1,
+  AppendTo[p, coord[[i]]];
+  AppendTo[
+   projCH, {(p[[i]][[1]] + CHa (p[[i]][[2]] - CHb))/(1 + CHa^2), 
+    CHa (p[[i]][[1]] + CHa (p[[i]][[2]] - CHb))/(1 + CHa^2) + CHb}];
+  i++;
+  ];
+grids[min_, max_] := 
+  Table[If[EvenQ[i], {i, Blue}, {i, Blue}], {i, 0, 1000, 50}];
+Show[
+ ListPlot[corners, GridLines -> grids, ImageSize -> Large, 
+  AspectRatio -> 1, PlotStyle -> White],
+ ListPlot[coord, GridLines -> grids, ImageSize -> Large, 
+  AspectRatio -> 1],
+ ListPlot[FBScoord, GridLines -> grids, ImageSize -> Large, 
+  AspectRatio -> 1, PlotStyle -> Red],
+ Plot[fit[x], {x, Min[coord[[All, 1]]], Max[coord[[All, 1]]]}],
+ Plot[fitFBS[x], {x, Min[FBScoord[[All, 1]]], 
+   Max[FBScoord[[All, 1]]]}, PlotStyle -> Red],
+ Graphics[{Dashed, Line[{p[[1]], projCH[[1]]}]}],
+ Graphics[{Dashed, Line[{p[[2]], projCH[[2]]}]}],
+ Graphics[{Dashed, Line[{p[[3]], projCH[[3]]}]}],
+ Graphics[{Dashed, Line[{p[[4]], projCH[[4]]}]}],
+ Graphics[{Dashed, Line[{p[[5]], projCH[[5]]}]}],
+ Graphics[{Dashed, Line[{p[[6]], projCH[[6]]}]}],
+ Graphics[{Dashed, Line[{p[[7]], projCH[[7]]}]}],
+ Graphics[{Dashed, Line[{p[[8]], projCH[[8]]}]}],
+ Graphics[{Dashed, Line[{p[[9]], projCH[[9]]}]}]
+ ]
+projCH = SortBy[projCH, #[[1]] &];
+FBScoord = SortBy[FBScoord, #[[1]] &];
+coord = SortBy[coord, #[[1]] &];
+p = SortBy[p, #[[1]] &];
+linecentroid = Sum[projCH[[i]], {i, 1, 9}]/Length[FBScoord];
+{AvErrorCHLine, AvErrorCH, 
+  linecentroidEr} = {Sum[
+    EuclideanDistance[projCH[[i]], FBScoord[[i]]], {i, 1, 9}]/
+   Length[FBScoord], AvErrorCH, 
+  EuclideanDistance[linecentroid, FBScoord[[5]]]}
+
+(*linecentroidEr gives the error term found in the paper*)
