@@ -4,6 +4,11 @@ Needs["Combinatorica`"]
 
 SetDirectory[NotebookDirectory[]]
 
+(*Choose AngleVal as value of Directional antennas angle. It should \
+divide Pi, at most 2Pi/3*)
+AngleVal = Pi/2;
+AngleCase = 2 Pi/AngleVal;
+
 data = Import[
    "localization propagation=ThreeGppUMaPropagationLossModel time=50 \
 grid=1000X1000 n(UE)=300 n(gNB+FBS)=8 lbs=48 fbs=50 seed=5 run=1.txt",
@@ -86,22 +91,12 @@ For[i = 1, i < 150,
   ];
 
 
-
-
-
-
-
-
-
-
-
-
-
-BLSectorAnchorFix = RandomReal[{-Pi, -Pi/2}];
-For[Angle90 = 0, Angle90 < 4,
-  BLSectorAnchor = BLSectorAnchorFix + Angle90*Pi/2;
+BLSectorAnchorFix = RandomReal[{-Pi, -AngleVal}];
+For[Angle90 = 0, Angle90 < AngleCase,
+  BLSectorAnchor = BLSectorAnchorFix + Angle90*AngleVal;
   For[timer = 0, timer < 9,
    
+   Print[Angle90];
    FBSTable = 
     Transpose[
      TableAllNoDup[
@@ -231,12 +226,12 @@ For[Angle90 = 0, Angle90 < 4,
    
    (**Bot left 90Deg**)
    
-   If[Angle90 < 3,
+   If[Angle90 < AngleCase - 1,
     For[j = 1, j < NumberUE + 1,
       
       
       If[(BLPolarLoc[[j]][[2]] > BLSectorAnchor && 
-         BLPolarLoc[[j]][[2]] < BLSectorAnchor + Pi/2),
+         BLPolarLoc[[j]][[2]] < BLSectorAnchor + AngleVal),
        AppendTo[
         BLUEsignal, {Loc[[j]][[1]], Loc[[j]][[2]], Loc[[j]][[6]]}];
        AppendTo[BLUEsignal2, {Loc[[j]][[1]], Loc[[j]][[2]]}];
@@ -248,14 +243,14 @@ For[Angle90 = 0, Angle90 < 4,
       ];
     ];
    
-   If[Angle90 == 3,
+   If[Angle90 == AngleCase - 1,
     For[j = 1, j < NumberUE + 1,
       
       
       If[(BLPolarLoc[[j]][[2]] > BLSectorAnchor && 
           BLPolarLoc[[j]][[2]] < 
-           BLSectorAnchor + Pi/2) || (BLPolarLoc[[j]][[2]] < 
-          BLSectorAnchor - 3 Pi/2),
+           BLSectorAnchor + AngleVal) || (BLPolarLoc[[j]][[2]] < 
+          BLSectorAnchor - (AngleCase - 1)*AngleVal),
        AppendTo[
         BLUEsignal, {Loc[[j]][[1]], Loc[[j]][[2]], Loc[[j]][[6]]}];
        AppendTo[BLUEsignal2, {Loc[[j]][[1]], Loc[[j]][[2]]}];
