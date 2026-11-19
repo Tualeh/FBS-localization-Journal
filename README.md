@@ -29,3 +29,14 @@ After the simulation finishes, a new output file will appear in the ns-3 directo
 ```
 localization propagation=Cost231PropagationLossModel time=5 grid=1000X1000 n(UE)=300 n(gNB+FBS)=8 lbs=48 fbs=50 seed=55 run=1.txt
 ```
+
+## GitHubMathematicaHP.txt 
+This file ontains Mathematica code for computing half-plane scores. It has been created in Mathematica version 12.
+
+## ScoringEfficient.ipynb 
+This file contains python code for computing the convex hull scores. 
+
+## GitHubTimeIntervalMathematica.txt 
+This file contains Mathematica code for computing time window based FBS localizatio. It has been created in Mathematica version 12.
+
+The order of running these files is first GitHubMathematicaHP.txt, then ScoringEfficient.ipynb and finally GitHubTimeIntervalMathematica.txt
